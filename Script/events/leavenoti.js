@@ -1,58 +1,56 @@
 module.exports.config = {
-	name: "leave",
-	eventType: ["log:unsubscribe"],
-	version: "1.0.0",
-	credits: "𝐂𝐘𝐁𝐄𝐑 ☢️_𖣘 -𝐁𝐎𝐓 ⚠️ 𝑻𝑬𝑨𝑴_ ☢️",
-	description: "Notify the Bot or the person leaving the group with a random gif/photo/video",
-	dependencies: {
-		"fs-extra": "",
-		"path": ""
-	}
+    name: "leave",
+    eventType: ["log:unsubscribe"],
+    version: "1.0.2",
+    credits: "ЁЭРмЁЭРбЁЭРмЁЭРбЁЭРЪЁЭРЭЁЭРЪЁЭРн ЁЭРЬЁЭРбЁЭРЪЁЭРн ЁЭРЫЁЭРиЁЭРн",
+    description: "Send goodbye message with profile picture or video if bot leaves",
+    dependencies: {
+        "fs-extra": "",
+        "path": "",
+        "axios": ""
+    }
 };
 
 module.exports.onLoad = function () {
     const { existsSync, mkdirSync } = global.nodemodule["fs-extra"];
     const { join } = global.nodemodule["path"];
+    const cachePath = join(__dirname, "cache", "leaveFiles");
+    if (!existsSync(cachePath)) mkdirSync(cachePath, { recursive: true });
+};
 
-	const path = join(__dirname, "cache", "leaveGif", "randomgif");
-	if (existsSync(path)) mkdirSync(path, { recursive: true });	
+module.exports.run = async function({ api, event, Users }) {
+    const axios = global.nodemodule["axios"];
+    const fs = global.nodemodule["fs-extra"];
+    const path = global.nodemodule["path"];
 
-	const path2 = join(__dirname, "cache", "leaveGif", "randomgif");
-    if (!existsSync(path2)) mkdirSync(path2, { recursive: true });
+    // ржпржжрж┐ ржмржЯ ржирж┐ржЬрзЗ ржЧрзНрж░рзБржк ржЫрж╛рзЬрзЗ тЖТ ржнрж┐ржбрж┐ржУ ржкрж╛ржарж╛ржУ
+    if (event.logMessageData.leftParticipantFbId == api.getCurrentUserID()) {
+        const videoPath = path.join(__dirname, "cache", "leaveFiles", "botLeave.mp4");
 
-    return;
-}
+        // ржПржЦрж╛ржирзЗ рждрзБржорж┐ ржирж┐ржЬрзЗрж░ ржнрж┐ржбрж┐ржУ ржлрж╛ржЗрж▓ рж░рзЗржЦрзЗ ржжрж┐рждрзЗ ржкрж╛рж░рзЛ ржмрж╛ URL ржерзЗржХрзЗ ржбрж╛ржЙржирж▓рзЛржб ржХрж░рждрзЗ ржкрж╛рж░рзЛ
+        // ржпржжрж┐ ржнрж┐ржбрж┐ржУ рж▓рзЛржХрж╛рж▓рж┐ ржерж╛ржХрзЗ рждрж╛рж╣рж▓рзЗ рж╕рж░рж╛рж╕рж░рж┐ ржкрж╛ржарж╛ржирзЛ рж╣ржмрзЗ
+        if (fs.existsSync(videoPath)) {
+            return api.sendMessage({
+                body: "ржмрж┐ржжрж╛ржпрж╝ рж╕ржмрж╛ржЗржХрзЗ ЁЯШв",
+                attachment: fs.createReadStream(videoPath)
+            }, event.threadID);
+        } else {
+            return api.sendMessage("ржмржЯ ржмрзЗрж░ рж╣рзЯрзЗ ржЧрзЗржЫрзЗ, ржХрж┐ржирзНрждрзБ ржнрж┐ржбрж┐ржУ ржлрж╛ржЗрж▓ ржкрж╛ржУрзЯрж╛ ржпрж╛рзЯржирж┐!", event.threadID);
+        }
+    }
 
-module.exports.run = async function({ api, event, Users, Threads }) {
-	if (event.logMessageData.leftParticipantFbId == api.getCurrentUserID()) return;
-	const { createReadStream, existsSync, mkdirSync, readdirSync } = global.nodemodule["fs-extra"];
-	const { join } =  global.nodemodule["path"];
-	const { threadID } = event;
-  const moment = require("moment-timezone");
-  const time = moment.tz("Asia/Dhaka").format("DD/MM/YYYY || HH:mm:s");
-  const hours = moment.tz("Asia/Dhaka").format("HH");
-	const data = global.data.threadData.get(parseInt(threadID)) || (await Threads.getData(threadID)).data;
-	const name = global.data.userName.get(event.logMessageData.leftParticipantFbId) || await Users.getNameUser(event.logMessageData.leftParticipantFbId);
-	const type = (event.author == event.logMessageData.leftParticipantFbId) ? "leave" : "managed";
-	const path = join(__dirname, "events", "123.mp4");
-	const pathGif = join(path, `${threadID}123.mp4`);
-	var msg, formPush
+    // ржЕржирзНржп ржХрзЗржЙ ржмрзЗрж░ рж╣рж▓рзЗ тЖТ ржирж╛ржо + ржкрзНрж░рзЛржлрж╛ржЗрж▓ ржкрж┐ржХржЪрж╛рж░
+    const name = await Users.getNameUser(event.logMessageData.leftParticipantFbId);
 
-	if (existsSync(path)) mkdirSync(path, { recursive: true });
+    const imgPath = path.join(__dirname, "cache", "leaveFiles", `${event.logMessageData.leftParticipantFbId}.jpg`);
+    let url = `https://graph.facebook.com/${event.logMessageData.leftParticipantFbId}/picture?width=512&height=512&access_token=${api.getAppState().access_token}`;
+    let getImage = (await axios.get(url, { responseType: "arraybuffer" })).data;
+    fs.writeFileSync(imgPath, Buffer.from(getImage, "binary"));
 
-(typeof data.customLeave == "undefined") ? msg = "╭═════⊹⊱✫⊰⊹═════╮ \n ⚠️ গুরুতর ঘোষণা ⚠️\n╰═════⊹⊱✫⊰⊹═════╯\n\n{session}||{name} ভাই/বোন...\nএই মাত্র গ্রুপ থেকে নিখোঁজ হয়েছেন!\nগ্রুপবাসীদের পক্ষ থেকে গভীর উদ্বেগ ও\nচাপা কান্নার মাধ্যমে জানানো যাচ্ছে...\n\n— উনি আর নেই... মানে গ্রুপে নেই!\nকিন্তু হৃদয়ে থেকে যাবেন, এক্টিভ মেম্বার হিসেবে | \n\n⏰ তারিখ ও সময়: {time}\n⚙️ স্ট্যাটাস: {type} (নিজে গেলো নাকি তাড়ানো হইলো বুঝলাম না)\n\✍️ মন্তব্য করে জানাও: তোমার কী ফিলিংস হইছে এই বিচ্ছেদে?" : msg = data.customLeave;
-	msg = msg.replace(/\{name}/g, name).replace(/\{type}/g, type).replace(/\{session}/g, hours <= 10 ? "𝙈𝙤𝙧𝙣𝙞𝙣𝙜" : 
-    hours > 10 && hours <= 12 ? "𝘼𝙛𝙩𝙚𝙧𝙉𝙤𝙤𝙣" :
-    hours > 12 && hours <= 18 ? "𝙀𝙫𝙚𝙣𝙞𝙣𝙜" : "𝙉𝙞𝙜𝙝𝙩").replace(/\{time}/g, time);  
+    const msg = {
+        body: `ржнрж╛рж▓рзЛ ржерж╛ржХржмрзЗ ржкрзНрж░рж┐ржпрж╝ ${name}, ржЖржмрж╛рж░ ржжрзЗржЦрж╛ рж╣ржмрзЗ тЭдя╕П`,
+        attachment: fs.createReadStream(imgPath)
+    };
 
-	const randomPath = readdirSync(join(__dirname, "cache", "leaveGif", "randomgif"));
-
-	if (existsSync(pathGif)) formPush = { body: msg, attachment: createReadStream(pathGif) }
-	else if (randomPath.length != 0) {
-		const pathRandom = join(__dirname, "cache", "leaveGif", "randomgif",`${randomPath[Math.floor(Math.random() * randomPath.length)]}`);
-		formPush = { body: msg, attachment: createReadStream(pathRandom) }
-	}
-	else formPush = { body: msg }
-	
-	return api.sendMessage(formPush, threadID);
-                            }
+    api.sendMessage(msg, event.threadID, () => fs.unlinkSync(imgPath));
+};
